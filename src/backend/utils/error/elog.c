@@ -3170,11 +3170,50 @@ send_message_to_server_log(ErrorData *edata)
 {
 	StringInfoData buf;
 	bool		fallback_to_stderr = false;
+    char *log_level;
 
+    /* Determine the log level as a string */
+    switch (edata->elevel)
+    {
+        case DEBUG5:
+        case DEBUG4:
+        case DEBUG3:
+        case DEBUG2:
+        case DEBUG1:
+            log_level = "DEBUG";
+            break;
+        case LOG:
+        case LOG_SERVER_ONLY:
+            log_level = "LOG";
+            break;
+        case INFO:
+            log_level = "INFO";
+            break;
+        case NOTICE:
+            log_level = "NOTICE";
+            break;
+        case WARNING:
+        case WARNING_CLIENT_ONLY:
+            log_level = "WARNING";
+            break;
+        case ERROR:
+            log_level = "ERROR";
+            break;
+        case FATAL:
+            log_level = "FATAL";
+            break;
+        case PANIC:
+            log_level = "PANIC";
+            break;
+        default:
+            log_level = "UNKNOWN";
+            break;
+    }
+	
 	initStringInfo(&buf);
 
 	log_line_prefix(&buf, edata);
-	appendStringInfo(&buf, "%s:  ", _(error_severity(edata->elevel)));
+    appendStringInfo(&buf, "[%s] %s:  ", log_level, _(error_severity(edata->elevel)));
 
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
 		appendStringInfo(&buf, "%s: ", unpack_sql_state(edata->sqlerrcode));
